@@ -30,3 +30,8 @@ personalkb-chat = "personal_kb.chat_app:main"
 
 [tool.setuptools]  
 packages = ["personal_kb"]  
+
+[tool.uv.workspace]
+members = [
+    "mcp-client",
+]

@@ -1,6 +1,6 @@
 import asyncio
 import os
-from openai import OpenAI
+from zhipuai import ZhipuAI
 from dotenv import load_dotenv
 from contextlib import AsyncExitStack
 
@@ -28,7 +28,7 @@ class MCPClient:
         if not self.openai_api_key:
             raise ValueError("❌ 未找到 OpenAI API Key，请在 .env 文件中设置 OPENAI_API_KEY")
         
-        self.client = OpenAI(api_key=self.openai_api_key, base_url=self.base_url)
+        self.client = ZhipuAI(api_key=self.openai_api_key)
 
     async def process_query(self, query: str) -> str:
         """调用 OpenAI API 处理用户查询
@@ -71,10 +71,7 @@ class MCPClient:
                 print(f"\n⚠️ 发生错误: {str(e)}")
 
     async def cleanup(self):
-        """清理资源
-        - 异步关闭所有通过 AsyncExitStack 管理的资源
-        - 确保程序退出时正确释放所有已分配的资源（如网络连接、文件句柄等）
-        """
+        """清理资源"""
         await self.exit_stack.aclose()
 
 

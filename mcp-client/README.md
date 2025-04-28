@@ -29,3 +29,14 @@ uv run client2.py
 # 或
 uv run --active client.py
 ```
+
+
+
+
+## 工具配置
+- OpenWeatherMap
+  - 去官网获取 API-Key 
+
+```
+uv add mcp httpx
+```

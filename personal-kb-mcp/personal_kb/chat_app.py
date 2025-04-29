@@ -14,7 +14,12 @@ from prompt_toolkit import PromptSession
 from prompt_toolkit.history import FileHistory  
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory  
 from prompt_toolkit.completion import WordCompleter  
-from pathlib import Path  
+from pathlib import Path
+
+
+from dotenv import load_dotenv
+
+load_dotenv()  
 
 from .zhipu_client import ZhipuClient  
 from .config import config  
@@ -38,31 +43,33 @@ def display_message(role: str, content: str) -> None:
 @app.command()  
 def chat(  
     api_key: str = typer.Option(None, "--api-key", "-k", help="智谱API密钥"),  
-    model: str = typer.Option("glm-4", "--model", "-m", help="要使用的智谱模型")  
+    model: str = typer.Option("deepseek-chat", "--model", "-m", help="要使用的智谱模型")  
 ):  
     """启动交互式聊天会话与知识库交互。"""  
     # 创建用户目录  
-    config_dir = Path.home() / ".personal_kb"  
+    config_dir = config.project_dir / ".personal_kb"  
     config_dir.mkdir(exist_ok=True)  
     
     # 设置历史文件  
     history_file = config_dir / "chat_history"  
     
     # 从环境变量获取API密钥  
-    api_key = api_key or os.environ.get("ZHIPU_API_KEY")  
+    api_key = api_key or os.getenv("DEEPSEEK_API_KEY")
+    
     if not api_key:  
         console.print("[red]错误: 未提供智谱API密钥。请使用--api-key参数或设置ZHIPU_API_KEY环境变量[/red]")  
         sys.exit(1)  
+        
     
     # 创建智谱客户端  
     client = ZhipuClient(api_key=api_key, model=model)  
     
-    # 启动MCP服务器  
+    # 移除以下启动MCP服务器的代码
     try:  
         client.start_mcp_server()  
     except Exception as e:  
         console.print(f"[red]启动MCP服务器出错: {str(e)}[/red]")  
-        sys.exit(1)  
+        sys.exit(1)
     
     # 欢迎消息  
     console.print(Panel(  
@@ -76,20 +83,27 @@ def chat(
     # 系统提示信息  
     system_message = {  
         "role": "system",  
-        "content": """你是一个强大的AI助手，与个人知识库系统集成。你可以使用工具来创建、搜索、更新和管理用户的笔记和标签。  
+        "content": """你是一个强大的AI助手，与个人知识库系统集成。当用户请求创建、查询或管理笔记时，你必须使用提供的工具来完成任务。以下是可用的工具和调用规则：
         
-功能包括：  
-1. 创建新笔记（create_note）  
-2. 获取笔记（get_note）  
-3. 更新笔记（update_note）  
-4. 删除笔记（delete_note）  
-5. 列出笔记（list_notes）  
-6. 搜索笔记（search_notes）  
-7. 列出标签（list_tags）  
-8. 按标签获取笔记（get_notes_by_tag）  
-9. 获取数据库统计信息（get_database_stats）  
+                    可用工具包括：  
+                    1. 创建新笔记（create_note）  
+                    2. 获取笔记（get_note）  
+                    3. 更新笔记（update_note）  
+                    4. 删除笔记（delete_note）  
+                    5. 列出笔记（list_notes）  
+                    6. 搜索笔记（search_notes）  
+                    7. 列出标签（list_tags）  
+                    8. 按标签获取笔记（get_notes_by_tag）  
+                    9. 获取数据库统计信息（get_database_stats）  
+                    
+                    
+                    调用规则：
+                    1. 当用户请求创建笔记时，立即使用create_note工具
+                    2. 当用户请求查询笔记时，使用get_note或search_notes工具
+                    3. 当用户请求列出笔记时，使用list_notes工具
+                    4. 其他笔记管理操作使用对应的工具
 
-始终使用最合适的工具来满足用户需求。在处理笔记内容时，保持原始格式。当创建或更新笔记时，确保保留用户提供的任何Markdown格式。"""  
+                    始终使用最合适的工具来满足用户需求。在处理笔记内容时，保持原始格式。当创建或更新笔记时，确保保留用户提供的任何Markdown格式。"""  
     }  
     
     # 创建会话历史  
@@ -152,6 +166,16 @@ def chat(
         # 停止MCP服务器  
         client.stop_mcp_server()  
         console.print("[cyan]会话结束，谢谢使用！[/cyan]")  
+        
+        
+        
+        
+@app.command()  
+def init(  
+    api_key: str = typer.Option(None, "--api-key", "-k", help="智谱API密钥"),  
+    model: str = typer.Option("glm-4-flash", "--model", "-m", help="要使用的智谱模型")  
+):  
+    pass
 
 def main():  
     app()  

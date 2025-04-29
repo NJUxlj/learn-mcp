@@ -16,7 +16,7 @@ class CreateNoteInput(BaseModel):
 
 class UpdateNoteInput(BaseModel):  
     """更新笔记的输入模型"""  
-    note_id: int = Field(..., description="要更新的笔记ID")  
+    note_id: int = Field(..., description="要更新的笔记ID")    # ... 表示该字段是必需的， None 表示该字段是可选的
     title: Optional[str] = Field(None, description="笔记的新标题")  
     content: Optional[str] = Field(None, description="笔记的新内容")  
     tags: Optional[List[str]] = Field(None, description="要与笔记关联的新标签列表")  

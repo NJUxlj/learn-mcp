@@ -1,0 +1,4 @@
+[console_scripts]
+personalkb = personal_kb.server:main
+personalkb-chat = personal_kb.chat_app:main
+personalkb-cli = personal_kb.cli:main

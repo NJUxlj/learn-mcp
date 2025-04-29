@@ -11,6 +11,8 @@ import os
 import pathlib  
 from typing import List, Dict, Any, Optional  
 
+from .config import config
+
 Base = declarative_base()  
 
 # 笔记和标签的多对多关联表  
@@ -80,7 +82,7 @@ class Database:
         """  
         if db_path is None:  
             # 在用户主目录中使用默认路径  
-            data_dir = pathlib.Path.home() / ".personal_kb"  
+            data_dir = config.project_dir / ".personal_kb"  
             data_dir.mkdir(exist_ok=True)  
             db_path = data_dir / "knowledge_base.db"  
         

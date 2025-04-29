@@ -7,6 +7,7 @@ import math
 # 实例化MCP服务器  
 mcp = FastMCP("Math Operations Server")  
 
+
 # 定义工具功能  
 @mcp.tool()  
 def add(a: int, b: int) -> int:  
@@ -33,4 +34,4 @@ def divide(a: int, b: int) -> float:
 # 启动服务器  
 if __name__ == "__main__":  
     # 使用stdio传输方式启动服务器  
-    mcp.run_stdio()  
+    mcp.run(transport='stdio')  

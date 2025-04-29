@@ -1,4 +1,27 @@
-# PersonalKB: 智谱AI+MCP工具增强的个人知识库  
+Metadata-Version: 2.4
+Name: personal-kb-mcp
+Version: 0.1.0
+Summary: A personal knowledge base with MCP integration for Zhipu AI
+Author-email: Your Name <your.email@example.com>
+License: MIT
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: httpx>=0.28.1
+Requires-Dist: python-dotenv>=1.1.0
+Requires-Dist: openai>=1.76.0
+Requires-Dist: pydantic>=2.5.0
+Requires-Dist: mcp>=1.6.0
+Requires-Dist: fastmcp>=0.4.0
+Requires-Dist: SQLAlchemy>=2.0.0
+Requires-Dist: rich>=13.5.0
+Requires-Dist: typer>=0.9.0
+Requires-Dist: requests>=2.28.0
+Requires-Dist: zhipuai>=2.1.5
+Requires-Dist: prompt-toolkit>=3.0.0
+Dynamic: license-file
+
+# PersonalKB: 智谱AI增强的个人知识库  
 
 一个与智谱AI集成的个人知识库系统。本项目允许您使用智谱的大语言模型直接与您的知识库进行交互，帮助您管理和检索个人笔记和信息。  
 
@@ -11,42 +34,14 @@
 - 使用SQLite数据库实现简单性和可移植性  
 - 交互式命令行界面  
 
-
-## 在不安装包的情况下使用
-```bash
-git clone https://github.com/yourusername/personal-kb-mcp.git  
-cd personal-kb-mcp 
-
-# 首先确保你本地有一个conda环境，没有的话可以创建一个
-pip install uv
-uv venv .venv    # 为本项目单独创建一个虚拟环境
-
-source .venv/bin/activate 【Linux】
-./.venv/Scripts/activate 【Windows】
-
-uv pip install -r pyproject.toml  # 安装项目依赖
-
-
-
-## 启动mcp服务器
-uv run python -m personal_kb.server run 
-
-## 启动对话客户端
-uv run python -m personal_kb.chat_app chat
-
-
-## 启动cli
-uv run python -m personal_kb.cli
-```
-
-## 安装 personal-kb-mcp 包，并运行命令行工具，实现与上面相同的功能
+## 安装  
 
 ```bash  
 # 从源代码安装  
 git clone https://github.com/yourusername/personal-kb-mcp.git  
 cd personal-kb-mcp 
 
-# 安装项目及其依赖  【安装 personal-kb-mcp 包】
+# 安装项目及其依赖  
 pip install -e .  
 
 # 激活虚拟环境

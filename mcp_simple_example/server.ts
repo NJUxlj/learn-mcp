@@ -1,6 +1,7 @@
 //使用Node.js/TypeScript实现MCP服务器
 // 首先安装必要的包  
-// npm install @modelcontextprotocol/sdk dotenv  
+// npm install @modelcontextprotocol/sdk dotenv   (Linux)
+// Start-Process powershell -Verb RunAs -ArgumentList "npm install @modelcontextprotocol/sdk dotenv"    (Windows)
 
 import { createServer } from '@modelcontextprotocol/sdk';  
 

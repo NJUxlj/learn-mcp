@@ -13,6 +13,9 @@ import sys
 import os  
 from pathlib import Path  
 import json  
+import time
+
+import datetime
 
 from .database import Database  
 from .schema import (  
@@ -35,6 +38,18 @@ logging.basicConfig(
         logging.StreamHandler(sys.stdout)  
     ]  
 )  
+
+'''
+handlers 的作用是：
+
+1. 它定义了一个日志处理器列表，每个处理器决定日志消息的输出位置
+2. 当前配置使用了 StreamHandler(sys.stdout) ，表示将日志输出到标准输出(stdout)
+3. 您可以添加多个处理器，比如同时输出到文件和控制台
+常见的handler类型包括：
+
+- StreamHandler : 输出到流(如stdout/stderr)
+- FileHandler : 输出到文件
+'''
 logger = logging.getLogger("personalkb")  
 
 def create_mcp_server(db_path=None):  
@@ -281,12 +296,50 @@ def run(
     rprint("[bold yellow]服务器已就绪。等待连接...[/bold yellow]")  
     
     try:  
-        mcp_server.run_stdio()  
+        rprint("[bold green]MCP服务器成功启动~~, 使用 Ctrl+C 停止服务器[/bold green]")
+        mcp_server.run(transport='stdio')    # MCP服务器在 stdio 模式下运行，等待客户端连接， 开启后会一直显示 Starting server "FastMCP"...
+        # mcp_server.run(host="0.0.0.0", port=8000)  # 改为HTTP模式
     except KeyboardInterrupt:  
         rprint("[yellow]接收到中断信号，正在优雅地关闭...[/yellow]")  
     except Exception as e:  
         rprint(f"[bold red]服务器错误: {str(e)}[/bold red]")  
         raise  
+    
+    
+@app.command()
+def connect(
+    db_path: str = typer.Option(None, "--db-path", "-d", help="数据库文件路径"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="显示详细日志"),
+    port: int = typer.Option(8000, "--port", "-p", help="MCP服务器端口")
+):
+    """连接到已运行的MCP服务器"""
+    # 如果启用详细模式，设置日志级别为DEBUG
+    if verbose:
+        logger.setLevel(logging.DEBUG)
+        
+    # 确定数据库路径
+    db_file = db_path or config.db_path
+    
+    rprint(f"[bold green]尝试连接到PersonalKB MCP服务器...[/bold green]")
+    rprint(f"[blue]数据库路径:[/blue] {db_file}")
+    
+    try:
+        # 尝试连接到指定端口
+        import socket
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(2)
+            if s.connect_ex(('localhost', port)) == 0:
+                rprint("[bold green]成功连接到MCP服务器[/bold green]")
+                # 这里应该实现实际的客户端连接逻辑
+                # 例如使用FastMCP客户端库或HTTP客户端
+                # 暂时保持简单实现
+                rprint("[bold green]您现在可以使用 Chat App 客户端进行交互[/bold green]")
+            else:
+                rprint("[bold red]错误: 未找到运行中的MCP服务器[/bold red]")
+                raise typer.Exit(1)
+    except Exception as e:
+        rprint(f"[bold red]连接服务器出错: {str(e)}[/bold red]")
+        raise
 
 @app.command()  
 def init(  
@@ -316,7 +369,7 @@ def init(
     
     # 如果数据库为空，创建一些示例笔记  
     with db.get_session() as session:  
-        note_count = session.query(db.Note).count()  
+        note_count = session.query(db.Note).count()   # 使用SQLAlchemy的查询接口查询 db.Note 表中的记录数量
         if note_count == 0:  
             rprint("[yellow]创建示例笔记...[/yellow]")  
             

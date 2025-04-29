@@ -3,6 +3,7 @@
 这个脚本可以脱离AI模型直接操作知识库。  
 """  
 
+import sys
 import typer  
 from rich.console import Console  
 from rich.table import Table  
@@ -35,15 +36,22 @@ def add(
         import tempfile  
         import subprocess  
         
+        # Creates a temporary markdown (.md) file that won't be automatically deleted
         with tempfile.NamedTemporaryFile(suffix=".md", delete=False) as temp:  
             temp_filename = temp.name  
         
         # 使用默认编辑器打开临时文件  
-        editor = os.environ.get("EDITOR", "nano")  
+        if sys.platform == "win":  # Windows
+            editor = os.environ.get("EDITOR", "notepad") 
+        else:
+            editor = os.environ.get("EDITOR", "nano")  # or vim
+            
+        # - Opens the temporary file in the selected editor
+            # - Blocks until editing is complete
         subprocess.call([editor, temp_filename])  
         
         # 读取编辑后的内容  
-        with open(temp_filename, "r") as temp:  
+        with open(temp_filename, "r", encoding="utf-8") as temp:  
             content = temp.read()  
         
         # 删除临时文件  

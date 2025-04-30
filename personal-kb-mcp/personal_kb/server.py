@@ -5,7 +5,8 @@ MCP服务器实现。
 """  
 
 import typer  
-from fastmcp import FastMCP  
+# from fastmcp import FastMCP  
+from mcp.server.fastmcp import FastMCP
 from rich.console import Console  
 from rich import print as rprint  
 import logging  
@@ -297,8 +298,8 @@ def run(
     
     try:  
         rprint("[bold green]MCP服务器成功启动~~, 使用 Ctrl+C 停止服务器[/bold green]")
-        mcp_server.run(transport='stdio')    # MCP服务器在 stdio 模式下运行，等待客户端连接， 开启后会一直显示 Starting server "FastMCP"...
-        # mcp_server.run(host="0.0.0.0", port=8000)  # 改为HTTP模式
+        # mcp_server.run(transport='stdio')    # MCP服务器在 stdio 模式下运行，等待客户端连接， 开启后会一直显示 Starting server "FastMCP"...
+        mcp_server.run(transport="sse")  # 改为HTTP模式
     except KeyboardInterrupt:  
         rprint("[yellow]接收到中断信号，正在优雅地关闭...[/yellow]")  
     except Exception as e:  

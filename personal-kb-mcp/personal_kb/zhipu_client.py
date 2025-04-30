@@ -8,7 +8,7 @@ import os
 from uuid import uuid4
 import subprocess  
 import tempfile  
-from typing import List, Dict, Any, Optional, Union  
+from typing import List, Dict, Any, Literal, Optional, Union  
 import zhipuai  
 from openai import OpenAI
 import requests  
@@ -44,7 +44,7 @@ class ZhipuClient:
             
         # 初始化智谱客户端  
         self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)  
-        self.model = model  
+        self.model = "deepseek-chat"  
         
         print("api-key = ", self.api_key)
         print("base_url = ", self.base_url)
@@ -94,6 +94,7 @@ class ZhipuClient:
                     bufsize=1,
                     encoding='utf-8',
                 )
+                self._discover_tools()  
                 return 
             except Exception as e:
                 console.log(f"[red]连接到已运行的MCP服务器出错: {str(e)}[/red]")
@@ -273,7 +274,7 @@ class ZhipuClient:
             }  
         ]  
         
-    def _execute_tool_call(self, tool_name: str, parameters: Dict[str, Any]) -> Dict[str, Any]:  
+    def _execute_tool_call(self, tool_name: str, parameters: Dict[str, Any], mode:Literal["sse", "stdio"]="sse") -> Dict[str, Any]:  
         """  
         执行工具调用，与MCP服务器通信。  
         
@@ -289,7 +290,37 @@ class ZhipuClient:
         
         console.log(f"\n[bold green] 开始执行工具调用: tool_name:{tool_name}, parameters:{parameters}[/bold green]")
         
+        if mode == "sse":
+            try:
+                # 改为HTTP请求方式与SSE服务器通信
+                response = requests.post(
+                    "http://localhost:8000/",
+                    json={
+                        "jsonrpc": "2.0",
+                        "method": "invoke",
+                        "params": {
+                            "name": tool_name,
+                            "parameters": parameters
+                        },
+                        "id": str(uuid4())
+                    },
+                    timeout=5
+                )
+                response.raise_for_status()
+                return response.json().get("result", {})
+                
+            except Exception as e:
+                console.log(f"[red]执行MCP工具调用出错: {str(e)}[/red]")
+                return {"error": str(e)}
+        
+        
         try:
+            # 检查MCP进程是否存活
+            if self.mcp_process.poll() is not None:
+                raise RuntimeError("MCP服务器进程已终止")
+            
+            console.log(f"self.mcp_process.poll() = {self.mcp_process.poll()}")
+            
             # 创建调用请求  
             request = {  
                 "jsonrpc": "2.0",  
@@ -302,21 +333,27 @@ class ZhipuClient:
             }  
             
             # 将请求发送到MCP服务器  
-            # 设置5秒超时
-            start_time = time.time()
+            
             self.mcp_process.stdin.write(json.dumps(request) + "\n")  
             self.mcp_process.stdin.flush()  
             
-            while True:
-                if time.time() - start_time > 5:
-                    raise TimeoutError("MCP服务器响应超时")
+            console.log("已将请求发送到MCP服务器")
+            # 设置5秒超时
+            start_time = time.time()
+            response_buffer = ""
             
+            while time.time() - start_time < 5:
                 # 读取响应  
                 if self.mcp_process.stdout.readable():
+                    print("开始读取响应")
                     response_line = self.mcp_process.stdout.readline()  
+                    print("读取到的响应：", response_line)
                     if response_line:
+                        # - 数据累积 ：由于MCP服务器的响应可能分多次到达（特别是响应较大时）， response_buffer 用于逐步累积这些分块的响应数据。
+                        # - JSON解析尝试 ：每次收到新的数据块后，代码会尝试将累积的 response_buffer 解析为JSON对象。如果解析失败（说明响应还不完整），会继续等待更多数据。
+                        response_buffer += response_line
                         try:
-                            response = json.loads(response_line)  
+                            response = json.loads(response_buffer)  
                             # 检查错误  
                             if "error" in response:  
                                 return {"error": response["error"]}  
@@ -324,6 +361,10 @@ class ZhipuClient:
                         except json.JSONDecodeError:
                             # 如果不是有效的JSON，继续等待
                             continue
+                        
+                time.sleep(0.1)  # 避免CPU占用过高
+            raise TimeoutError("MCP服务器响应超时")
+        
         except Exception as e:
             console.log(f"[red]执行MCP工具调用出错: {str(e)}[/red]")
             return {"error": str(e)}
@@ -350,15 +391,17 @@ class ZhipuClient:
             kwargs = {  
                 "model": self.model,  
                 "messages": messages,  
-                "max_tokens":1024,
-                "temperature":0.7,
-                "stream":False
+                # "max_tokens":1024,
+                # "temperature":0.7,
+                # "stream":False
             }  
+            
+            # print("self.mcp_tools = ", self.mcp_tools)
             
             # 如果启用工具，添加工具参数  
             if tools and self.mcp_tools:  
                 kwargs["tools"] = self.mcp_tools  
-                kwargs["tool_choice"] = "auto"  
+                kwargs["tool_choice"] = "required"    # "auto"
             
             # 调用API 
             try: 
@@ -369,6 +412,7 @@ class ZhipuClient:
             
             # 处理工具调用  
             message = response.choices[0].message  
+            print("message = ", message)
             
             try:
                 if tools and hasattr(message, 'tool_calls') and message.tool_calls:  

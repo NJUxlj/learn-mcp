@@ -16,8 +16,8 @@ else:
 class MCPClient:
     def __init__(self):
         """初始化 MCP 客户端"""
-        self.exit_stack = AsyncExitStack()
-        self.openai_api_key = os.getenv("OPENAI_API_KEY")  # 读取 OpenAI API Key
+        self.exit_stack = AsyncExitStack()  # 异步上下文管理器栈，主要用于管理多个异步资源 [网络连接、文件句柄] 的生命周期
+        self.openai_api_key = os.getenv("DEEPSEEK_API_KEY")  # 读取 OpenAI API Key
         self.base_url = os.getenv("BASE_URL")  # 读取 BASE URL
         self.model = os.getenv("MODEL")  # 读取 model
         

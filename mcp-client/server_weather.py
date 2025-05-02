@@ -3,13 +3,17 @@ import httpx
 from typing import Any
 from mcp.server.fastmcp import FastMCP
 
+from dotenv import load_dotenv
+import os
+load_dotenv()
+
 
 # 初始化 MCP 服务器
 mcp = FastMCP("WeatherServer")
 
 # OpenWeather API 配置
 OPENWEATHER_API_BASE = "https://api.openweathermap.org/data/2.5/weather"
-API_KEY = "YOUR_API_KEY"  # 请替换为你自己的 OpenWeather API Key
+API_KEY = os.getenv("OPENWEATHER_API_KEY")  # 请替换为你自己的 OpenWeather API Key
 USER_AGENT = "weather-app/1.0"
 
 
@@ -27,7 +31,7 @@ async def fetch_weather(city: str) -> dict[str, Any] | None:
     }
     headers = {"User-Agent": USER_AGENT}
     
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient() as client:   # 发送异步 GET 请求到 OpenWeather API。
         try:
             response = await client.get(
                 OPENWEATHER_API_BASE,
@@ -79,7 +83,7 @@ def format_weather(data: dict[str, Any] | str) -> str:
     )
 
 
-@mcp.tool()
+@mcp.tool()    # 通过 @mcp.tool() 装饰器注册为 MCP 服务器的工具，使其能够被客户端调用。
 async def query_weather(city: str) -> str:
     """
     输入指定城市的英文名称，返回今日天气查询结果。
